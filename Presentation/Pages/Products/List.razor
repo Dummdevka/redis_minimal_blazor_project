@@ -1,0 +1,64 @@
+﻿@page "/products"
+
+@using Domain.Entities;
+@using Application.Products.Queries.GetProducts;
+@using MediatR;
+@using Application.Abstractions;
+@inject IMediator Mediator
+
+
+<h3>Products</h3>
+<h5>@loadedText</h5>
+@if(products is null) { 
+    <span>Loading...</span>    
+} else { 
+    <table class="table">
+        <tr>
+            <th>Id:</th>
+            <th>Title:</th>
+            <th>Price</th>
+            <th>Availability:</th>
+        </tr>
+        @foreach (var product in products)
+        {
+            <tr>
+                <td>@product.Id</td>
+                <td>@product.Title</td>
+                <td>@product.Price</td>
+                <td>@product.Availability</td>
+            </tr>
+        }
+    </table>
+}
+<button class="btn btn-primary" @onclick="loadProducts">Load products</button>
+
+
+@code {
+    private List<Product> products;
+
+    protected string loadedText;
+
+    [Inject]
+    private ICacheService _cacheService { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        loadProducts();
+        //products = await Mediator.Send(new GetProductsQuery());
+    }
+
+    protected async Task loadProducts() {
+        products = null;
+
+        string key = "BlazorDemo_" + DateTime.Now.ToString("yyyyMMdd_hhmm");
+        products = await _cacheService.GetRecordAsync<List<Product>>(key);
+        loadedText = "Loaded from cache";
+        if(products is null) {
+            loadedText = "Loaded from API";
+            products = await Mediator.Send(new GetProductsQuery());
+
+            await _cacheService.SetRecordAsync<List<Product>>(key, products);
+        }
+    }
+}
+

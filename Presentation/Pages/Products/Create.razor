@@ -1,0 +1,37 @@
+﻿@page "/products/create"
+@using Presentation.Models;
+@using Domain.Entities;
+@using Microsoft.AspNetCore.Components.Forms;
+@using Application.Products.Commands.CreateProduct;
+@using MediatR;
+@using Microsoft.Data.SqlClient;
+@inject IMediator Mediator;
+
+<h3>Create a product</h3>
+ 
+<EditForm Model="@newProduct" OnValidSubmit="@insertProduct">
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
+
+    <InputText id="title" @bind-Value="@newProduct.Title"></InputText>
+    <InputNumber id="price" @bind-Value="@newProduct.Price"></InputNumber>
+    <InputNumber id="availability" @bind-Value="@newProduct.Availability"></InputNumber>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+</EditForm>
+
+@code {
+    private DisplayProduct newProduct = new();
+    private bool showAlert = false;
+
+    public async Task insertProduct() {
+        try {
+            await Mediator.Send(new CreateProductCommand(newProduct.Title, newProduct.Price, newProduct.Availability));
+            newProduct = new();
+
+        } catch(SqlException ex) {
+            //do smth...
+        }
+    }
+}
+
